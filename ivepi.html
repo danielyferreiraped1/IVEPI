@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IVEPI — Índice de Vulnerabilidade Educacional da Primeira Infância</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,400;0,700;1,400&display=swap');
+
+  :root {
+    --verde:   #1B6B4A;
+    --verde-claro: #2E8B6A;
+    --verde-muito-claro: #E8F5EF;
+    --amarelo: #F5A623;
+    --amarelo-claro: #FFF3DC;
+    --vermelho: #D94F3D;
+    --vermelho-claro: #FDECEA;
+    --cinza-escuro: #1A1A2E;
+    --cinza-medio: #4A5568;
+    --cinza-claro: #F7F8FA;
+    --branco: #FFFFFF;
+    --borda: #E2E8F0;
+    --sombra: 0 2px 12px rgba(0,0,0,0.08);
+    --radius: 12px;
+    --fonte-display: 'Fraunces', serif;
+    --fonte-corpo: 'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--fonte-corpo); background: var(--cinza-claro); color: var(--cinza-escuro); min-height: 100vh; }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--verde);
+    color: white;
+    padding: 0 32px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 16px rgba(27,107,74,0.3);
+  }
+  .header-logo { display: flex; align-items: center; gap: 12px; }
+  .header-logo .sigla {
+    font-family: var(--fonte-display);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .header-logo .nome {
+    font-size: 12px;
+    opacity: 0.8;
+    line-height: 1.3;
+    max-width: 220px;
+  }
+  .header-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    opacity: 0.9;
+  }
+  .avatar {
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 14px;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    background: white;
+    border-bottom: 1px solid var(--borda);
+    padding: 0 32px;
+    display: flex;
+    gap: 4px;
+  }
+  .nav-btn {
+    padding: 14px 18px;
+    border: none;
+    background: none;
+    font-family: var(--fonte-corpo);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--cinza-medio);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .nav-btn:hover { color: var(--verde); }
+  .nav-btn.ativo { color: var(--verde); border-bottom-color: var(--verde); }
+
+  /* ── MAIN ── */
+  .main { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+
+  /* ── CARDS ── */
+  .card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--sombra);
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+  .card-titulo {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--cinza-escuro);
+  }
+  .card-subtitulo {
+    font-size: 14px;
+    color: var(--cinza-medio);
+    margin-bottom: 24px;
+  }
+
+  /* ── FORMULÁRIO ── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-grid.full { grid-template-columns: 1fr; }
+  .form-grupo { display: flex; flex-direction: column; gap: 6px; }
+  .form-grupo label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--cinza-medio);
+  }
+  .form-grupo input,
+  .form-grupo select,
+  .form-grupo textarea {
+    padding: 10px 14px;
+    border: 1.5px solid var(--borda);
+    border-radius: 8px;
+    font-family: var(--fonte-corpo);
+    font-size: 14px;
+    color: var(--cinza-escuro);
+    transition: border-color 0.2s;
+    outline: none;
+    background: white;
+  }
+  .form-grupo input:focus,
+  .form-grupo select:focus,
+  .form-grupo textarea:focus {
+    border-color: var(--verde-claro);
+    box-shadow: 0 0 0 3px rgba(46,139,106,0.1);
+  }
+
+  /* ── BOTÕES ── */
+  .btn {
+    padding: 11px 24px;
+    border-radius: 8px;
+    border: none;
+    font-family: var(--fonte-corpo);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primario { background: var(--verde); color: white; }
+  .btn-primario:hover { background: var(--verde-claro); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(27,107,74,0.3); }
+  .btn-secundario { background: var(--verde-muito-claro); color: var(--verde); }
+  .btn-secundario:hover { background: #d4eee2; }
+  .btn-perigo { background: var(--vermelho-claro); color: var(--vermelho); }
+  .btn-row { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+
+  /* ── TABELA ── */
+  .tabela-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { padding: 12px 14px; text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--cinza-medio); border-bottom: 2px solid var(--borda); }
+  td { padding: 13px 14px; border-bottom: 1px solid var(--borda); color: var(--cinza-escuro); }
+  tr:hover td { background: var(--cinza-claro); }
+  tr:last-child td { border-bottom: none; }
+
+  /* ── BADGE IVEPI ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .badge-verde { background: var(--verde-muito-claro); color: var(--verde); }
+  .badge-amarelo { background: var(--amarelo-claro); color: #B07800; }
+  .badge-vermelho { background: var(--vermelho-claro); color: var(--vermelho); }
+
+  /* ── DIMENSÕES ── */
+  .dim-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 16px 20px;
+    background: var(--verde-muito-claro);
+    border-radius: 10px;
+    border-left: 4px solid var(--verde);
+  }
+  .dim-icone {
+    font-size: 28px;
+    line-height: 1;
+  }
+  .dim-info h3 { font-size: 16px; font-weight: 600; color: var(--verde); }
+  .dim-info p { font-size: 13px; color: var(--cinza-medio); margin-top: 2px; }
+
+  .pergunta-card {
+    border: 1.5px solid var(--borda);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+  }
+  .pergunta-card:hover { border-color: var(--verde-claro); }
+  .pergunta-texto {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    line-height: 1.5;
+    color: var(--cinza-escuro);
+  }
+  .escala {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .escala-opcao {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: 1.5px solid var(--borda);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    background: white;
+    color: var(--cinza-medio);
+  }
+  .escala-opcao input { display: none; }
+  .escala-opcao:hover { border-color: var(--verde-claro); color: var(--verde); }
+  .escala-opcao.selecionado { border-color: var(--verde); background: var(--verde-muito-claro); color: var(--verde); }
+
+  /* ── PROGRESSO ── */
+  .progresso-bar {
+    background: var(--borda);
+    border-radius: 4px;
+    height: 6px;
+    margin: 16px 0;
+    overflow: hidden;
+  }
+  .progresso-fill {
+    height: 100%;
+    background: var(--verde);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+  .progresso-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--cinza-medio);
+    margin-bottom: 6px;
+  }
+
+  /* ── STEPS ── */
+  .steps {
+    display: flex;
+    gap: 0;
+    margin-bottom: 28px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px 8px 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--cinza-medio);
+    white-space: nowrap;
+    position: relative;
+  }
+  .step::after {
+    content: '›';
+    position: absolute;
+    right: 0;
+    color: var(--borda);
+    font-size: 18px;
+  }
+  .step:last-child::after { display: none; }
+  .step-num {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--borda);
+    color: var(--cinza-medio);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .step.ativo .step-num { background: var(--verde); color: white; }
+  .step.ativo { color: var(--verde); }
+  .step.feito .step-num { background: var(--verde-muito-claro); color: var(--verde); }
+
+  /* ── DASHBOARD ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--sombra);
+    border-top: 4px solid var(--borda);
+  }
+  .stat-card.verde { border-top-color: var(--verde); }
+  .stat-card.amarelo { border-top-color: var(--amarelo); }
+  .stat-card.vermelho { border-top-color: var(--vermelho); }
+  .stat-numero { font-family: var(--fonte-display); font-size: 38px; font-weight: 700; line-height: 1; }
+  .stat-label { font-size: 13px; color: var(--cinza-medio); margin-top: 6px; }
+
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .chart-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--sombra);
+  }
+  .chart-titulo { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+  canvas { max-height: 240px; }
+
+  /* ── RESULTADO IVEPI ── */
+  .resultado-ivepi {
+    text-align: center;
+    padding: 32px;
+    border-radius: var(--radius);
+    margin: 20px 0;
+  }
+  .resultado-ivepi.baixa { background: var(--verde-muito-claro); border: 2px solid var(--verde); }
+  .resultado-ivepi.media { background: var(--amarelo-claro); border: 2px solid var(--amarelo); }
+  .resultado-ivepi.alta { background: var(--vermelho-claro); border: 2px solid var(--vermelho); }
+  .resultado-numero { font-family: var(--fonte-display); font-size: 56px; font-weight: 700; line-height: 1; }
+  .resultado-ivepi.baixa .resultado-numero { color: var(--verde); }
+  .resultado-ivepi.media .resultado-numero { color: #B07800; }
+  .resultado-ivepi.alta .resultado-numero { color: var(--vermelho); }
+  .resultado-classificacao { font-size: 20px; font-weight: 600; margin-top: 8px; }
+  .resultado-desc { font-size: 14px; color: var(--cinza-medio); margin-top: 6px; }
+
+  /* ── EMPTY STATE ── */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--cinza-medio);
+  }
+  .empty-icone { font-size: 48px; margin-bottom: 12px; }
+  .empty h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--cinza-escuro); }
+  .empty p { font-size: 14px; }
+
+  /* ── ALERTA ── */
+  .alerta {
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .alerta-info { background: #EBF4FF; color: #1A56DB; border-left: 4px solid #1A56DB; }
+  .alerta-sucesso { background: var(--verde-muito-claro); color: var(--verde); border-left: 4px solid var(--verde); }
+
+  /* ── SEÇÃO TELA ── */
+  .tela { display: none; }
+  .tela.ativa { display: block; }
+
+  /* ── DIMENSÃO STEP ── */
+  .dim-step { display: none; }
+  .dim-step.ativa { display: block; }
+
+  /* ── LINK ── */
+  a.link-verde { color: var(--verde); text-decoration: underline; cursor: pointer; }
+
+  /* ── RESPONSIVO ── */
+  @media (max-width: 680px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .chart-grid { grid-template-columns: 1fr; }
+    .header { padding: 0 16px; }
+    .nav { padding: 0 8px; }
+    .main { padding: 16px; }
+    .header-logo .nome { display: none; }
+  }
+
+  @media print {
+    .header, .nav, .btn, .btn-row { display: none !important; }
+    .card { box-shadow: none; border: 1px solid var(--borda); }
+    body { background: white; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-logo">
+    <div class="sigla">IVEPI</div>
+    <div class="nome">Índice de Vulnerabilidade Educacional da Primeira Infância</div>
+  </div>
+  <div class="header-user">
+    <div class="avatar" id="avatarLetra">P</div>
+    <span id="nomeUsuario">Professor(a)</span>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn ativo" onclick="irPara('dashboard')">📊 Painel Geral</button>
+  <button class="nav-btn" onclick="irPara('criancas')">👧 Crianças</button>
+  <button class="nav-btn" onclick="irPara('nova-avaliacao')">📝 Nova Avaliação</button>
+  <button class="nav-btn" onclick="irPara('relatorios')">📋 Relatórios</button>
+  <button class="nav-btn" onclick="irPara('configuracoes')">⚙️ Configurações</button>
+</nav>
+
+<main class="main">
+
+<!-- ══════════════════════════════════════════ -->
+<!-- TELA: DASHBOARD                           -->
+<!-- ══════════════════════════════════════════ -->
+<div id="tela-dashboard" class="tela ativa">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+      <div>
+        <div class="card-titulo" id="saudacao">Bom dia! 👋</div>
+        <div class="card-subtitulo">Veja aqui o resumo das crianças avaliadas na sua turma.</div>
+      </div>
+      <button class="btn btn-primario" onclick="irPara('nova-avaliacao')">+ Nova Avaliação</button>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card verde">
+      <div class="stat-numero" id="stat-total">0</div>
+      <div class="stat-label">Crianças Avaliadas</div>
+    </div>
+    <div class="stat-card amarelo">
+      <div class="stat-numero" id="stat-media">—</div>
+      <div class="stat-label">IVEPI Médio da Turma</div>
+    </div>
+    <div class="stat-card vermelho">
+      <div class="stat-numero" id="stat-atencao">0</div>
+      <div class="stat-label">Precisam de Atenção</div>
+    </div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card">
+      <div class="chart-titulo">Distribuição por Vulnerabilidade</div>
+      <canvas id="grafico-pizza"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-titulo">Média por Dimensão</div>
+      <canvas id="grafico-dimensoes"></canvas>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:0;">
+    <div class="card-titulo">Crianças que precisam de atenção</div>
+    <div class="card-subtitulo">Crianças com IVEPI em faixa de média ou alta vulnerabilidade.</div>
+    <div id="lista-atencao">
+      <div class="empty">
+        <div class="empty-icone">🌱</div>
+        <h3>Nenhuma avaliação ainda</h3>
+        <p>Cadastre crianças e preencha os indicadores para ver os resultados aqui.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- TELA: CRIANÇAS                            -->
+<!-- ══════════════════════════════════════════ -->
+<div id="tela-criancas" class="tela">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div>
+        <div class="card-titulo">Crianças Cadastradas</div>
+        <div class="card-subtitulo">Todas as crianças da sua turma e seus resultados.</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="busca-crianca" placeholder="🔍 Buscar criança..." style="padding:9px 14px;border:1.5px solid var(--borda);border-radius:8px;font-size:14px;outline:none;" oninput="renderTabelaCriancas()">
+        <button class="btn btn-primario" onclick="irPara('nova-avaliacao')">+ Nova</button>
+      </div>
+    </div>
+    <div class="tabela-wrap" style="margin-top:20px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome da Criança</th>
+            <th>Idade</th>
+            <th>Turma</th>
+            <th>IVEPI</th>
+            <th>Classificação</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-criancas-body">
+          <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--cinza-medio);">Nenhuma criança cadastrada ainda.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- TELA: NOVA AVALIAÇÃO                       -->
+<!-- ══════════════════════════════════════════ -->
+<div id="tela-nova-avaliacao" class="tela">
+
+  <!-- Steps -->
+  <div class="steps" id="avaliacao-steps">
+    <div class="step ativo" data-step="0"><div class="step-num">1</div> Dados da Criança</div>
+    <div class="step" data-step="1"><div class="step-num">2</div> 👨‍👩‍👧 A Família Participa?</div>
+    <div class="step" data-step="2"><div class="step-num">3</div> 🏠 Rotina em Casa</div>
+    <div class="step" data-step="3"><div class="step-num">4</div> 📚 Oportunidades de Aprender</div>
+    <div class="step" data-step="4"><div class="step-num">5</div> 🤝 Escola e Comunidade</div>
+    <div class="step" data-step="5"><div class="step-num">6</div> 😊 Bem-estar da Criança</div>
+    <div class="step" data-step="6"><div class="step-num">7</div> ✅ Resultado</div>
+  </div>
+
+  <!-- STEP 0: Dados da Criança -->
+  <div class="dim-step ativa" id="step-0">
+    <div class="card">
+      <div class="card-titulo">Dados da Criança</div>
+      <div class="card-subtitulo">Preencha as informações básicas antes de começar a avaliação.</div>
+      <div class="form-grid">
+        <div class="form-grupo">
+          <label>Nome da criança *</label>
+          <input type="text" id="crianca-nome" placeholder="Ex: Maria Silva">
+        </div>
+        <div class="form-grupo">
+          <label>Data de nascimento *</label>
+          <input type="date" id="crianca-nascimento">
+        </div>
+        <div class="form-grupo">
+          <label>Turma / Sala</label>
+          <input type="text" id="crianca-turma" placeholder="Ex: Maternal II — Turma A">
+        </div>
+        <div class="form-grupo">
+          <label>Período</label>
+          <select id="crianca-periodo">
+            <option value="">Selecione...</option>
+            <option value="Matutino">Matutino</option>
+            <option value="Vespertino">Vespertino</option>
+            <option value="Integral">Integral</option>
+          </select>
+        </div>
+        <div class="form-grupo">
+          <label>Nome da mãe / responsável</label>
+          <input type="text" id="crianca-responsavel" placeholder="Ex: Ana Silva">
+        </div>
+        <div class="form-grupo">
+          <label>Contato do responsável</label>
+          <input type="tel" id="crianca-contato" placeholder="Ex: (65) 99999-9999">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primario" onclick="avancarStep()">Continuar →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 1: Dimensão 1 — A Família Participa? -->
+  <div class="dim-step" id="step-1">
+    <div class="card">
+      <div class="dim-header">
+        <div class="dim-icone">👨‍👩‍👧</div>
+        <div class="dim-info">
+          <h3>Dimensão 1 — A Família Participa da Vida Escolar?</h3>
+          <p>Avalie o quanto a família acompanha e se envolve com a escola.</p>
+        </div>
+      </div>
+      <div class="progresso-info">
+        <span>Dimensão 1 de 5</span>
+        <span id="prog-1-perc">0% respondido</span>
+      </div>
+      <div class="progresso-bar"><div class="progresso-fill" id="prog-1" style="width:0%"></div></div>
+
+      <div id="perguntas-d1"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-secundario" onclick="voltarStep()">← Voltar</button>
+        <button class="btn btn-primario" onclick="avancarStep()">Continuar →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: Dimensão 2 — Rotina em Casa -->
+  <div class="dim-step" id="step-2">
+    <div class="card">
+      <div class="dim-header">
+        <div class="dim-icone">🏠</div>
+        <div class="dim-info">
+          <h3>Dimensão 2 — Como é a Rotina da Criança em Casa?</h3>
+          <p>Avalie as condições do dia a dia que influenciam o aprendizado.</p>
+        </div>
+      </div>
+      <div class="progresso-info">
+        <span>Dimensão 2 de 5</span>
+        <span id="prog-2-perc">0% respondido</span>
+      </div>
+      <div class="progresso-bar"><div class="progresso-fill" id="prog-2" style="width:0%"></div></div>
+
+      <div id="perguntas-d2"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-secundario" onclick="voltarStep()">← Voltar</button>
+        <button class="btn btn-primario" onclick="avancarStep()">Continuar →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: Dimensão 3 — Oportunidades de Aprender -->
+  <div class="dim-step" id="step-3">
+    <div class="card">
+      <div class="dim-header">
+        <div class="dim-icone">📚</div>
+        <div class="dim-info">
+          <h3>Dimensão 3 — A Criança Tem Oportunidades de Aprender em Casa?</h3>
+          <p>Avalie o acesso a livros, brinquedos e experiências que estimulam o desenvolvimento.</p>
+        </div>
+      </div>
+      <div class="progresso-info">
+        <span>Dimensão 3 de 5</span>
+        <span id="prog-3-perc">0% respondido</span>
+      </div>
+      <div class="progresso-bar"><div class="progresso-fill" id="prog-3" style="width:0%"></div></div>
+
+      <div id="perguntas-d3"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-secundario" onclick="voltarStep()">← Voltar</button>
+        <button class="btn btn-primario" onclick="avancarStep()">Continuar →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4: Dimensão 4 — Escola e Comunidade -->
+  <div class="dim-step" id="step-4">
+    <div class="card">
+      <div class="dim-header">
+        <div class="dim-icone">🤝</div>
+        <div class="dim-info">
+          <h3>Dimensão 4 — A Família Participa da Comunidade Escolar?</h3>
+          <p>Avalie o vínculo entre a família e a comunidade ao redor da escola.</p>
+        </div>
+      </div>
+      <div class="progresso-info">
+        <span>Dimensão 4 de 5</span>
+        <span id="prog-4-perc">0% respondido</span>
+      </div>
+      <div class="progresso-bar"><div class="progresso-fill" id="prog-4" style="width:0%"></div></div>
+
+      <div id="perguntas-d4"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-secundario" onclick="voltarStep()">← Voltar</button>
+        <button class="btn btn-primario" onclick="avancarStep()">Continuar →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 5: Dimensão 5 — Bem-estar da Criança -->
+  <div class="dim-step" id="step-5">
+    <div class="card">
+      <div class="dim-header">
+        <div class="dim-icone">😊</div>
+        <div class="dim-info">
+          <h3>Dimensão 5 — Como a Criança Está na Escola?</h3>
+          <p>Avalie o bem-estar, a participação e o envolvimento da criança no dia a dia escolar.</p>
+        </div>
+      </div>
+      <div class="progresso-info">
+        <span>Dimensão 5 de 5</span>
+        <span id="prog-5-perc">0% respondido</span>
+      </div>
+      <div class="progresso-bar"><div class="progresso-fill" id="prog-5" style="width:0%"></div></div>
+
+      <div id="perguntas-d5"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-secundario" onclick="voltarStep()">← Voltar</button>
+        <button class="btn btn-primario" onclick="calcularESalvar()">Ver Resultado ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 6: Resultado -->
+  <div class="dim-step" id="step-6">
+    <div class="card">
+      <div class="card-titulo">Resultado da Avaliação</div>
+      <div class="card-subtitulo" id="resultado-crianca-nome">Avaliação de —</div>
+
+      <div id="resultado-ivepi-box" class="resultado-ivepi baixa">
+        <div class="resultado-numero" id="resultado-numero">—</div>
+        <div class="resultado-classificacao" id="resultado-classificacao">—</div>
+        <div class="resultado-desc" id="resultado-desc">—</div>
+      </div>
+
+      <canvas id="grafico-radar" style="max-height:300px;max-width:500px;margin:0 auto;display:block;margin-top:20px;"></canvas>
+
+      <div id="resultado-observacoes" style="margin-top:20px;"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-secundario" onclick="irPara('criancas')">Ver todas as crianças</button>
+        <button class="btn btn-primario" onclick="novaAvaliacaoLimpa()">+ Nova Avaliação</button>
+        <button class="btn btn-secundario" onclick="window.print()">🖨️ Imprimir</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- TELA: RELATÓRIOS                          -->
+<!-- ══════════════════════════════════════════ -->
+<div id="tela-relatorios" class="tela">
+  <div class="card">
+    <div class="card-titulo">Relatórios e Exportação</div>
+    <div class="card-subtitulo">Exporte os dados para usar em apresentações, relatórios e análises.</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px;">
+      <div style="border:1.5px solid var(--borda);border-radius:10px;padding:20px;">
+        <div style="font-size:24px;margin-bottom:10px;">📊</div>
+        <div style="font-weight:600;margin-bottom:6px;">Relatório Completo da Turma</div>
+        <div style="font-size:13px;color:var(--cinza-medio);margin-bottom:14px;">Todas as crianças com IVEPI, classificação e dimensões.</div>
+        <button class="btn btn-primario" onclick="exportarCSV()">Baixar em CSV (Excel)</button>
+      </div>
+      <div style="border:1.5px solid var(--borda);border-radius:10px;padding:20px;">
+        <div style="font-size:24px;margin-bottom:10px;">🖨️</div>
+        <div style="font-weight:600;margin-bottom:6px;">Imprimir Painel</div>
+        <div style="font-size:13px;color:var(--cinza-medio);margin-bottom:14px;">Imprima os gráficos e dados para apresentação.</div>
+        <button class="btn btn-secundario" onclick="irParaImprimir()">Visualizar e Imprimir</button>
+      </div>
+    </div>
+
+    <div style="margin-top:24px;">
+      <div class="card-titulo" style="font-size:16px;">Resumo Estatístico</div>
+      <div id="resumo-estatistico" style="margin-top:12px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- TELA: CONFIGURAÇÕES                       -->
+<!-- ══════════════════════════════════════════ -->
+<div id="tela-configuracoes" class="tela">
+  <div class="card">
+    <div class="card-titulo">Configurações</div>
+    <div class="card-subtitulo">Informações da sua conta e da turma.</div>
+    <div class="form-grid">
+      <div class="form-grupo">
+        <label>Seu nome</label>
+        <input type="text" id="config-nome" placeholder="Ex: Professora Ana">
+      </div>
+      <div class="form-grupo">
+        <label>Escola</label>
+        <input type="text" id="config-escola" placeholder="Ex: EMEI Arco-Íris">
+      </div>
+      <div class="form-grupo">
+        <label>Município</label>
+        <input type="text" id="config-municipio" placeholder="Ex: Cáceres — MT">
+      </div>
+      <div class="form-grupo">
+        <label>Ano letivo</label>
+        <input type="text" id="config-ano" placeholder="Ex: 2025">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primario" onclick="salvarConfig()">Salvar</button>
+      <button class="btn btn-perigo" onclick="limparTudo()">Limpar todos os dados</button>
+    </div>
+    <div class="alerta alerta-info" style="margin-top:20px;">
+      ℹ️ Os dados são salvos localmente neste navegador. Para transferir para outro dispositivo, use a exportação CSV.
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// DADOS E CONFIGURAÇÕES
+// ══════════════════════════════════════════════════════════
+
+const DIMENSOES = {
+  d1: {
+    nome: "A Família Participa da Vida Escolar?",
+    peso: 0.25,
+    perguntas: [
+      { id: "d1q1", texto: "A família comparece às reuniões de pais e mestres?" },
+      { id: "d1q2", texto: "Os responsáveis respondem os bilhetes e comunicados enviados pela escola?" },
+      { id: "d1q3", texto: "A família participa dos eventos e festas da escola?" },
+      { id: "d1q4", texto: "Os responsáveis conversam com a professora sobre o desenvolvimento da criança?" },
+      { id: "d1q5", texto: "A família demonstra interesse em saber o que a criança aprende na escola?" },
+    ]
+  },
+  d2: {
+    nome: "Como é a Rotina da Criança em Casa?",
+    peso: 0.25,
+    perguntas: [
+      { id: "d2q1", texto: "A criança frequenta a escola regularmente (falta pouco)?" },
+      { id: "d2q2", texto: "A criança chega descansada à escola, com sono adequado?" },
+      { id: "d2q3", texto: "A criança se alimenta bem (recebe refeições em casa)?" },
+      { id: "d2q4", texto: "A criança tem uma rotina organizada em casa (horários definidos)?" },
+      { id: "d2q5", texto: "A criança chega à escola limpa e com os materiais básicos?" },
+    ]
+  },
+  d3: {
+    nome: "A Criança Tem Oportunidades de Aprender em Casa?",
+    peso: 0.20,
+    perguntas: [
+      { id: "d3q1", texto: "A criança tem acesso a livros ou histórias infantis em casa?" },
+      { id: "d3q2", texto: "Alguém conta histórias ou lê para a criança em casa?" },
+      { id: "d3q3", texto: "A criança tem brinquedos que estimulam a imaginação e o aprendizado?" },
+      { id: "d3q4", texto: "A família leva a criança a passeios, praças ou espaços culturais?" },
+      { id: "d3q5", texto: "A criança assiste a conteúdos educativos (desenhos, vídeos adequados para a idade)?" },
+    ]
+  },
+  d4: {
+    nome: "A Família Participa da Comunidade Escolar?",
+    peso: 0.15,
+    perguntas: [
+      { id: "d4q1", texto: "A família participa de projetos ou atividades promovidos pela escola?" },
+      { id: "d4q2", texto: "A família conhece outros pais e participa da comunidade ao redor da escola?" },
+      { id: "d4q3", texto: "A criança tem contato com outras crianças fora da escola (vizinhos, primos, amigos)?" },
+      { id: "d4q4", texto: "A família apoia iniciativas da escola (campanhas, doações, mutirões)?" },
+    ]
+  },
+  d5: {
+    nome: "Como a Criança Está na Escola?",
+    peso: 0.15,
+    perguntas: [
+      { id: "d5q1", texto: "A criança interage bem com os colegas e faz amizades?" },
+      { id: "d5q2", texto: "A criança participa ativamente das atividades propostas em sala?" },
+      { id: "d5q3", texto: "A criança demonstra alegria e interesse quando está na escola?" },
+      { id: "d5q4", texto: "A criança se comunica bem (fala, gesticula, se expressa)?" },
+      { id: "d5q5", texto: "A criança demonstra curiosidade e vontade de aprender?" },
+    ]
+  }
+};
+
+const ESCALA = [
+  { valor: 1, texto: "Nunca", emoji: "😞" },
+  { valor: 2, texto: "Raramente", emoji: "😕" },
+  { valor: 3, texto: "Às vezes", emoji: "😐" },
+  { valor: 4, texto: "Quase sempre", emoji: "🙂" },
+  { valor: 5, texto: "Sempre", emoji: "😄" },
+];
+
+let stepAtual = 0;
+let respostas = {};
+let criancaAtual = {};
+let graficoPizza = null;
+let graficoDimensoes = null;
+let graficoRadar = null;
+
+// ══════════════════════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════════════════════
+function getCriancas() {
+  return JSON.parse(localStorage.getItem('ivepi_criancas') || '[]');
+}
+function saveCriancas(arr) {
+  localStorage.setItem('ivepi_criancas', JSON.stringify(arr));
+}
+function getConfig() {
+  return JSON.parse(localStorage.getItem('ivepi_config') || '{}');
+}
+function saveConfig(c) {
+  localStorage.setItem('ivepi_config', JSON.stringify(c));
+}
+
+// ══════════════════════════════════════════════════════════
+// NAVEGAÇÃO
+// ══════════════════════════════════════════════════════════
+function irPara(tela) {
+  document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+  document.getElementById('tela-' + tela).classList.add('ativa');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('ativo'));
+  const mapa = { dashboard: 0, criancas: 1, 'nova-avaliacao': 2, relatorios: 3, configuracoes: 4 };
+  if (mapa[tela] !== undefined) document.querySelectorAll('.nav-btn')[mapa[tela]].classList.add('ativo');
+
+  if (tela === 'dashboard') renderDashboard();
+  if (tela === 'criancas') renderTabelaCriancas();
+  if (tela === 'relatorios') renderRelatorios();
+  if (tela === 'configuracoes') carregarConfig();
+  window.scrollTo(0, 0);
+}
+
+// ══════════════════════════════════════════════════════════
+// SAUDAÇÃO
+// ══════════════════════════════════════════════════════════
+function saudacao() {
+  const h = new Date().getHours();
+  const cfg = getConfig();
+  const nome = cfg.nome ? `, ${cfg.nome.split(' ')[0]}` : '';
+  if (h < 12) return `Bom dia${nome}! 🌅`;
+  if (h < 18) return `Boa tarde${nome}! ☀️`;
+  return `Boa noite${nome}! 🌙`;
+}
+
+// ══════════════════════════════════════════════════════════
+// CONSTRUÇÃO DAS PERGUNTAS
+// ══════════════════════════════════════════════════════════
+function construirPerguntas(dimKey, containerId, progressoId, percId) {
+  const dim = DIMENSOES[dimKey];
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  dim.perguntas.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'pergunta-card';
+    div.innerHTML = `
+      <div class="pergunta-texto">${p.texto}</div>
+      <div class="escala">
+        ${ESCALA.map(e => `
+          <label class="escala-opcao ${respostas[p.id] == e.valor ? 'selecionado' : ''}" id="label-${p.id}-${e.valor}">
+            <input type="radio" name="${p.id}" value="${e.valor}" ${respostas[p.id] == e.valor ? 'checked' : ''} onchange="registrarResposta('${p.id}', ${e.valor}, '${dimKey}', '${progressoId}', '${percId}')">
+            ${e.emoji} ${e.texto}
+          </label>
+        `).join('')}
+      </div>`;
+    container.appendChild(div);
+  });
+  atualizarProgresso(dimKey, progressoId, percId);
+}
+
+function registrarResposta(perguntaId, valor, dimKey, progressoId, percId) {
+  respostas[perguntaId] = valor;
+  // Atualiza visual
+  const dim = DIMENSOES[dimKey];
+  ESCALA.forEach(e => {
+    const el = document.getElementById(`label-${perguntaId}-${e.valor}`);
+    if (el) el.classList.toggle('selecionado', e.valor == valor);
+  });
+  atualizarProgresso(dimKey, progressoId, percId);
+}
+
+function atualizarProgresso(dimKey, progressoId, percId) {
+  const dim = DIMENSOES[dimKey];
+  const total = dim.perguntas.length;
+  const respondidas = dim.perguntas.filter(p => respostas[p.id] !== undefined).length;
+  const perc = Math.round((respondidas / total) * 100);
+  document.getElementById(progressoId).style.width = perc + '%';
+  document.getElementById(percId).textContent = perc + '% respondido';
+}
+
+// ══════════════════════════════════════════════════════════
+// STEPS DE AVALIAÇÃO
+// ══════════════════════════════════════════════════════════
+function irStep(n) {
+  document.querySelectorAll('.dim-step').forEach((el, i) => el.classList.toggle('ativa', i === n));
+  document.querySelectorAll('#avaliacao-steps .step').forEach((el, i) => {
+    el.classList.toggle('ativo', i === n);
+    el.classList.toggle('feito', i < n);
+  });
+  stepAtual = n;
+  window.scrollTo(0, 0);
+
+  // Constrói perguntas dinamicamente
+  if (n === 1) construirPerguntas('d1', 'perguntas-d1', 'prog-1', 'prog-1-perc');
+  if (n === 2) construirPerguntas('d2', 'perguntas-d2', 'prog-2', 'prog-2-perc');
+  if (n === 3) construirPerguntas('d3', 'perguntas-d3', 'prog-3', 'prog-3-perc');
+  if (n === 4) construirPerguntas('d4', 'perguntas-d4', 'prog-4', 'prog-4-perc');
+  if (n === 5) construirPerguntas('d5', 'perguntas-d5', 'prog-5', 'prog-5-perc');
+}
+
+function avancarStep() {
+  if (stepAtual === 0) {
+    const nome = document.getElementById('crianca-nome').value.trim();
+    if (!nome) { alert('Por favor, informe o nome da criança.'); return; }
+    criancaAtual = {
+      nome,
+      nascimento: document.getElementById('crianca-nascimento').value,
+      turma: document.getElementById('crianca-turma').value,
+      periodo: document.getElementById('crianca-periodo').value,
+      responsavel: document.getElementById('crianca-responsavel').value,
+      contato: document.getElementById('crianca-contato').value,
+    };
+  }
+  if (stepAtual < 6) irStep(stepAtual + 1);
+}
+
+function voltarStep() {
+  if (stepAtual > 0) irStep(stepAtual - 1);
+}
+
+function novaAvaliacaoLimpa() {
+  respostas = {};
+  criancaAtual = {};
+  irStep(0);
+  document.getElementById('crianca-nome').value = '';
+  document.getElementById('crianca-nascimento').value = '';
+  document.getElementById('crianca-turma').value = '';
+  document.getElementById('crianca-periodo').value = '';
+  document.getElementById('crianca-responsavel').value = '';
+  document.getElementById('crianca-contato').value = '';
+}
+
+// ══════════════════════════════════════════════════════════
+// CÁLCULO DO IVEPI
+// ══════════════════════════════════════════════════════════
+function calcularIVEPI() {
+  const dims = ['d1','d2','d3','d4','d5'];
+  let scoreTotal = 0;
+  const scoresDim = {};
+
+  dims.forEach(dk => {
+    const dim = DIMENSOES[dk];
+    const pergs = dim.perguntas;
+    let soma = 0;
+    let count = 0;
+    pergs.forEach(p => {
+      if (respostas[p.id] !== undefined) { soma += respostas[p.id]; count++; }
+    });
+    const media = count > 0 ? soma / count : 0;
+    const normalizado = ((media - 1) / 4) * 100; // 0-100
+    scoresDim[dk] = Math.round(normalizado);
+    scoreTotal += normalizado * dim.peso;
+  });
+
+  // Normaliza pesos (total = 1.0)
+  return { total: Math.round(scoreTotal), dims: scoresDim };
+}
+
+function classificarIVEPI(score) {
+  // Score alto = MENOS vulnerável (família participa, rotina boa etc.)
+  // Invertemos: vulnerabilidade = 100 - score
+  const vuln = 100 - score;
+  if (vuln <= 30) return { nivel: 'baixa', texto: 'Baixa Vulnerabilidade', desc: 'A criança apresenta condições favoráveis ao seu desenvolvimento educacional.', cor: 'baixa' };
+  if (vuln <= 60) return { nivel: 'media', texto: 'Média Vulnerabilidade', desc: 'Há alguns fatores que merecem atenção e acompanhamento mais próximo.', cor: 'media' };
+  return { nivel: 'alta', texto: 'Alta Vulnerabilidade', desc: 'Esta criança precisa de atenção especial e apoio mais intenso da escola e da família.', cor: 'alta' };
+}
+
+function ivepiNota(score) {
+  // Converte score (0-100 favorabilidade) para IVEPI (0-10)
+  return (score / 10).toFixed(1);
+}
+
+// ══════════════════════════════════════════════════════════
+// SALVAR E MOSTRAR RESULTADO
+// ══════════════════════════════════════════════════════════
+function calcularESalvar() {
+  const resultado = calcularIVEPI();
+  const classif = classificarIVEPI(resultado.total);
+
+  const crianca = {
+    ...criancaAtual,
+    id: Date.now(),
+    data: new Date().toLocaleDateString('pt-BR'),
+    respostas: { ...respostas },
+    scoreTotal: resultado.total,
+    scoresDim: resultado.dims,
+    classificacao: classif.nivel,
+    ivepi: ivepiNota(resultado.total),
+  };
+
+  const lista = getCriancas();
+  lista.push(crianca);
+  saveCriancas(lista);
+
+  // Mostra resultado
+  document.getElementById('resultado-crianca-nome').textContent = `Avaliação de ${crianca.nome} — ${crianca.data}`;
+  document.getElementById('resultado-numero').textContent = crianca.ivepi;
+  document.getElementById('resultado-classificacao').textContent = classif.texto;
+  document.getElementById('resultado-desc').textContent = classif.desc;
+
+  const box = document.getElementById('resultado-ivepi-box');
+  box.className = 'resultado-ivepi ' + classif.cor;
+
+  // Observações por dimensão
+  const obs = document.getElementById('resultado-observacoes');
+  obs.innerHTML = '<div style="font-weight:600;margin-bottom:12px;">Resultado por dimensão:</div>';
+  const dimKeys = ['d1','d2','d3','d4','d5'];
+  dimKeys.forEach(dk => {
+    const dim = DIMENSOES[dk];
+    const s = resultado.dims[dk];
+    const vuln = 100 - s;
+    let cor = 'verde', emoji = '✅';
+    if (vuln > 30 && vuln <= 60) { cor = 'amarelo'; emoji = '⚠️'; }
+    if (vuln > 60) { cor = 'vermelho'; emoji = '🔴'; }
+    obs.innerHTML += `
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--borda);">
+        <span style="font-size:18px;">${emoji}</span>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:500;">${dim.nome}</div>
+          <div style="background:var(--borda);border-radius:4px;height:6px;margin-top:6px;overflow:hidden;">
+            <div style="width:${s}%;height:100%;background:var(--verde);border-radius:4px;"></div>
+          </div>
+        </div>
+        <span class="badge badge-${cor === 'verde' ? 'verde' : cor === 'amarelo' ? 'amarelo' : 'vermelho'}">${s}/100</span>
+      </div>`;
+  });
+
+  // Gráfico radar
+  if (graficoRadar) graficoRadar.destroy();
+  const ctx = document.getElementById('grafico-radar').getContext('2d');
+  graficoRadar = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['A Família\nParticipa?', 'Rotina\nem Casa', 'Oportunidades\nde Aprender', 'Escola e\nComunidade', 'Bem-estar\nda Criança'],
+      datasets: [{
+        label: crianca.nome,
+        data: dimKeys.map(dk => resultado.dims[dk]),
+        backgroundColor: 'rgba(27,107,74,0.15)',
+        borderColor: '#1B6B4A',
+        borderWidth: 2,
+        pointBackgroundColor: '#1B6B4A',
+      }]
+    },
+    options: {
+      scales: { r: { min: 0, max: 100, ticks: { stepSize: 25 } } },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  irStep(6);
+}
+
+// ══════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════
+function renderDashboard() {
+  document.getElementById('saudacao').textContent = saudacao();
+  const lista = getCriancas();
+  document.getElementById('stat-total').textContent = lista.length;
+
+  if (lista.length === 0) {
+    document.getElementById('stat-media').textContent = '—';
+    document.getElementById('stat-atencao').textContent = '0';
+    document.getElementById('lista-atencao').innerHTML = `<div class="empty"><div class="empty-icone">🌱</div><h3>Nenhuma avaliação ainda</h3><p>Clique em <strong>+ Nova Avaliação</strong> para começar.</p></div>`;
+    if (graficoPizza) { graficoPizza.destroy(); graficoPizza = null; }
+    if (graficoDimensoes) { graficoDimensoes.destroy(); graficoDimensoes = null; }
+    return;
+  }
+
+  const media = lista.reduce((s, c) => s + parseFloat(c.ivepi), 0) / lista.length;
+  document.getElementById('stat-media').textContent = media.toFixed(1);
+
+  const atencao = lista.filter(c => c.classificacao !== 'baixa');
+  document.getElementById('stat-atencao').textContent = atencao.length;
+
+  // Lista atenção
+  const la = document.getElementById('lista-atencao');
+  if (atencao.length === 0) {
+    la.innerHTML = `<div style="padding:20px;text-align:center;color:var(--verde);font-weight:500;">✅ Todas as crianças estão com IVEPI favorável!</div>`;
+  } else {
+    la.innerHTML = `<div class="tabela-wrap"><table>
+      <thead><tr><th>Nome</th><th>IVEPI</th><th>Situação</th><th>Turma</th></tr></thead>
+      <tbody>
+        ${atencao.map(c => `<tr>
+          <td><strong>${c.nome}</strong></td>
+          <td>${c.ivepi}</td>
+          <td>${badgeClassif(c.classificacao)}</td>
+          <td>${c.turma || '—'}</td>
+        </tr>`).join('')}
+      </tbody></table></div>`;
+  }
+
+  // Gráfico pizza
+  const counts = { baixa: 0, media: 0, alta: 0 };
+  lista.forEach(c => counts[c.classificacao]++);
+
+  if (graficoPizza) graficoPizza.destroy();
+  const ctx1 = document.getElementById('grafico-pizza').getContext('2d');
+  graficoPizza = new Chart(ctx1, {
+    type: 'doughnut',
+    data: {
+      labels: ['Baixa Vulnerabilidade', 'Média Vulnerabilidade', 'Alta Vulnerabilidade'],
+      datasets: [{
+        data: [counts.baixa, counts.media, counts.alta],
+        backgroundColor: ['#1B6B4A', '#F5A623', '#D94F3D'],
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      plugins: { legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 } } } },
+      cutout: '65%',
+    }
+  });
+
+  // Gráfico dimensões
+  const dimKeys = ['d1','d2','d3','d4','d5'];
+  const mediasDim = dimKeys.map(dk => {
+    const vals = lista.map(c => c.scoresDim?.[dk] || 0);
+    return Math.round(vals.reduce((a,b) => a+b, 0) / vals.length);
+  });
+
+  if (graficoDimensoes) graficoDimensoes.destroy();
+  const ctx2 = document.getElementById('grafico-dimensoes').getContext('2d');
+  graficoDimensoes = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: ['A Família Participa?', 'Rotina em Casa', 'Oportunidades', 'Comunidade', 'Bem-estar'],
+      datasets: [{
+        label: 'Média da turma (/100)',
+        data: mediasDim,
+        backgroundColor: mediasDim.map(v => v >= 70 ? '#1B6B4A' : v >= 40 ? '#F5A623' : '#D94F3D'),
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      scales: {
+        y: { min: 0, max: 100, ticks: { stepSize: 25 } },
+        x: { ticks: { font: { size: 11 } } }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// TABELA CRIANÇAS
+// ══════════════════════════════════════════════════════════
+function renderTabelaCriancas() {
+  const lista = getCriancas();
+  const busca = document.getElementById('busca-crianca')?.value.toLowerCase() || '';
+  const filtrada = lista.filter(c => c.nome.toLowerCase().includes(busca));
+  const tbody = document.getElementById('tabela-criancas-body');
+
+  if (filtrada.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--cinza-medio);">${busca ? 'Nenhuma criança encontrada.' : 'Nenhuma criança cadastrada ainda.'}</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtrada.map(c => `
+    <tr>
+      <td><strong>${c.nome}</strong></td>
+      <td>${calcularIdade(c.nascimento)}</td>
+      <td>${c.turma || '—'}</td>
+      <td><strong>${c.ivepi}</strong></td>
+      <td>${badgeClassif(c.classificacao)}</td>
+      <td><button class="btn btn-perigo" onclick="excluirCrianca(${c.id})" style="padding:5px 12px;font-size:12px;">Excluir</button></td>
+    </tr>`).join('');
+}
+
+function calcularIdade(nasc) {
+  if (!nasc) return '—';
+  const hoje = new Date();
+  const n = new Date(nasc);
+  let anos = hoje.getFullYear() - n.getFullYear();
+  const m = hoje.getMonth() - n.getMonth();
+  if (m < 0 || (m === 0 && hoje.getDate() < n.getDate())) anos--;
+  return anos + ' anos';
+}
+
+function badgeClassif(classif) {
+  const map = {
+    baixa: '<span class="badge badge-verde">✅ Baixa</span>',
+    media: '<span class="badge badge-amarelo">⚠️ Média</span>',
+    alta:  '<span class="badge badge-vermelho">🔴 Alta</span>',
+  };
+  return map[classif] || '—';
+}
+
+function excluirCrianca(id) {
+  if (!confirm('Tem certeza que deseja excluir esta criança?')) return;
+  const lista = getCriancas().filter(c => c.id !== id);
+  saveCriancas(lista);
+  renderTabelaCriancas();
+}
+
+// ══════════════════════════════════════════════════════════
+// RELATÓRIOS
+// ══════════════════════════════════════════════════════════
+function renderRelatorios() {
+  const lista = getCriancas();
+  const el = document.getElementById('resumo-estatistico');
+  if (lista.length === 0) {
+    el.innerHTML = '<div class="empty"><div class="empty-icone">📊</div><h3>Sem dados ainda</h3><p>Adicione avaliações para ver o resumo.</p></div>';
+    return;
+  }
+
+  const counts = { baixa: 0, media: 0, alta: 0 };
+  lista.forEach(c => counts[c.classificacao]++);
+  const media = lista.reduce((s, c) => s + parseFloat(c.ivepi), 0) / lista.length;
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
+      <div style="background:var(--verde-muito-claro);padding:16px;border-radius:10px;text-align:center;">
+        <div style="font-size:28px;font-weight:700;color:var(--verde);">${counts.baixa}</div>
+        <div style="font-size:13px;color:var(--verde);">Baixa Vulnerabilidade</div>
+      </div>
+      <div style="background:var(--amarelo-claro);padding:16px;border-radius:10px;text-align:center;">
+        <div style="font-size:28px;font-weight:700;color:#B07800;">${counts.media}</div>
+        <div style="font-size:13px;color:#B07800;">Média Vulnerabilidade</div>
+      </div>
+      <div style="background:var(--vermelho-claro);padding:16px;border-radius:10px;text-align:center;">
+        <div style="font-size:28px;font-weight:700;color:var(--vermelho);">${counts.alta}</div>
+        <div style="font-size:13px;color:var(--vermelho);">Alta Vulnerabilidade</div>
+      </div>
+    </div>
+    <div style="font-size:14px;color:var(--cinza-medio);">
+      Total de crianças: <strong>${lista.length}</strong> &nbsp;|&nbsp;
+      IVEPI médio da turma: <strong>${media.toFixed(1)}</strong> &nbsp;|&nbsp;
+      Precisam de atenção: <strong>${counts.media + counts.alta}</strong>
+    </div>`;
+}
+
+function exportarCSV() {
+  const lista = getCriancas();
+  if (lista.length === 0) { alert('Nenhum dado para exportar.'); return; }
+
+  const cfg = getConfig();
+  const cabecalho = ['Nome', 'Data de Nascimento', 'Turma', 'Período', 'Responsável', 'IVEPI', 'Classificação', 'Dim1-Família', 'Dim2-Rotina', 'Dim3-Oportunidades', 'Dim4-Comunidade', 'Dim5-Bem-Estar', 'Data Avaliação'];
+  const linhas = lista.map(c => [
+    c.nome, c.nascimento, c.turma, c.periodo, c.responsavel,
+    c.ivepi, c.classificacao,
+    c.scoresDim?.d1 || '', c.scoresDim?.d2 || '', c.scoresDim?.d3 || '', c.scoresDim?.d4 || '', c.scoresDim?.d5 || '',
+    c.data
+  ].map(v => `"${v || ''}"`).join(','));
+
+  const csvContent = '\uFEFF' + [cabecalho.join(','), ...linhas].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `IVEPI_${cfg.escola || 'Escola'}_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.csv`;
+  a.click();
+}
+
+function irParaImprimir() {
+  irPara('dashboard');
+  setTimeout(() => window.print(), 800);
+}
+
+// ══════════════════════════════════════════════════════════
+// CONFIGURAÇÕES
+// ══════════════════════════════════════════════════════════
+function carregarConfig() {
+  const cfg = getConfig();
+  document.getElementById('config-nome').value = cfg.nome || '';
+  document.getElementById('config-escola').value = cfg.escola || '';
+  document.getElementById('config-municipio').value = cfg.municipio || '';
+  document.getElementById('config-ano').value = cfg.ano || new Date().getFullYear();
+}
+
+function salvarConfig() {
+  const cfg = {
+    nome: document.getElementById('config-nome').value,
+    escola: document.getElementById('config-escola').value,
+    municipio: document.getElementById('config-municipio').value,
+    ano: document.getElementById('config-ano').value,
+  };
+  saveConfig(cfg);
+  const n = cfg.nome;
+  if (n) {
+    document.getElementById('nomeUsuario').textContent = n.split(' ')[0];
+    document.getElementById('avatarLetra').textContent = n[0].toUpperCase();
+  }
+  alert('✅ Configurações salvas!');
+}
+
+function limparTudo() {
+  if (!confirm('Tem certeza? Isso vai apagar TODOS os dados de avaliações. Esta ação não pode ser desfeita.')) return;
+  localStorage.clear();
+  alert('Dados apagados.');
+  renderDashboard();
+}
+
+// ══════════════════════════════════════════════════════════
+// INICIALIZAÇÃO
+// ══════════════════════════════════════════════════════════
+function init() {
+  const cfg = getConfig();
+  if (cfg.nome) {
+    document.getElementById('nomeUsuario').textContent = cfg.nome.split(' ')[0];
+    document.getElementById('avatarLetra').textContent = cfg.nome[0].toUpperCase();
+  }
+  renderDashboard();
+}
+
+init();
+</script>
+</body>
+</html>
